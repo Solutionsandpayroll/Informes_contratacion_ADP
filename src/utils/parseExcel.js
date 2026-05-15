@@ -1,5 +1,26 @@
 import * as XLSX from 'xlsx'
 
+function normalizeHeader(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
+}
+
+function getColumnIndex(headerMap, candidates, fallbackIndex) {
+  for (const candidate of candidates) {
+    const idx = headerMap.get(normalizeHeader(candidate))
+    if (idx !== undefined) return idx
+  }
+  return fallbackIndex
+}
+
+function valueAt(row, idx) {
+  return idx >= 0 ? row[idx] : ''
+}
+
 // Convierte serial de fecha Excel a Date en UTC
 function excelDateToJS(value) {
   if (!value) return null
@@ -44,27 +65,74 @@ export function parseExcel(file) {
           defval: '',
         })
 
+        if (!rows.length) {
+          throw new Error('La hoja seleccionada no contiene datos.')
+        }
+
+        const headers = rows[0] || []
+        const headerMap = new Map(
+          headers.map((h, i) => [normalizeHeader(h), i])
+        )
+
+        const idxPais = getColumnIndex(headerMap, ['PAIS'], 0)
+        const idxResponsable = getColumnIndex(headerMap, ['RESPONSABLE'], 1)
+        const idxUnidad = getColumnIndex(headerMap, ['UNIDAD'], 2)
+        const idxCliente = getColumnIndex(headerMap, ['CLIENTE'], 3)
+        const idxIdentificacion = getColumnIndex(headerMap, ['IDENTIFICACION'], 4)
+        const idxApellido1 = getColumnIndex(headerMap, ['APELLIDO1'], 5)
+        const idxApellido2 = getColumnIndex(headerMap, ['APELLIDO 2', 'APELLIDO2'], 6)
+        const idxNombre1 = getColumnIndex(headerMap, ['NOMBRE1'], 7)
+        const idxNombre2 = getColumnIndex(headerMap, ['NOMBRE 2', 'NOMBRE2'], 8)
+        const idxCargo = getColumnIndex(headerMap, ['CARGO'], 14)
+        const idxFechaIngreso = getColumnIndex(headerMap, ['F. INGRESO'], 15)
+        const idxTipoContrato = getColumnIndex(headerMap, ['T. CONTRATO'], 16)
+        const idxSeguimiento = getColumnIndex(headerMap, ['SEGUIMIENTO'], 18)
+
+        const idxFechaRecibido = getColumnIndex(
+          headerMap,
+          ['F. RECIBIDO SOLICITUD', 'F. RECIBIDO'],
+          19
+        )
+        const idxFechaExamenes = getColumnIndex(
+          headerMap,
+          ['F. EXAMENES INGRESO', 'F. EXAMENES MEDICOS'],
+          20
+        )
+        const idxFechaFirma = getColumnIndex(
+          headerMap,
+          ['F. FIRMA CONTRATO'],
+          21
+        )
+
         const registros = rows
           .slice(1) // omitir encabezado
-          .filter((row) => row[4] !== '' && row[4] != null)
+          .filter((row) => {
+            const identificacion = valueAt(row, idxIdentificacion)
+            return identificacion !== '' && identificacion != null
+          })
           .map((row) => {
-            const fechaRecibido = excelDateToJS(row[19])
-            const fechaExamenes = excelDateToJS(row[20])
-            const fechaFirma    = excelDateToJS(row[21])
-            const fechaIngreso  = excelDateToJS(row[15])
+            const fechaRecibido = excelDateToJS(valueAt(row, idxFechaRecibido))
+            const fechaExamenes = excelDateToJS(valueAt(row, idxFechaExamenes))
+            const fechaFirma    = excelDateToJS(valueAt(row, idxFechaFirma))
+            const fechaIngreso  = excelDateToJS(valueAt(row, idxFechaIngreso))
+
+            const apellido1 = valueAt(row, idxApellido1)
+            const apellido2 = valueAt(row, idxApellido2)
+            const nombre1 = valueAt(row, idxNombre1)
+            const nombre2 = valueAt(row, idxNombre2)
 
             return {
-              pais:           String(row[0] || '').trim() || '-',
-              responsable:    String(row[1] || '').trim() || '-',
-              unidad:         String(row[2] || '').trim() || '-',
-              cliente:        String(row[3] || '').trim() || '-',
-              identificacion: String(row[4]),
-              apellidos:      `${row[5] || ''} ${row[6] || ''}`.trim(),
-              nombres:        `${row[7] || ''} ${row[8] || ''}`.trim(),
-              nombreCompleto: `${row[7] || ''} ${row[8] || ''} ${row[5] || ''} ${row[6] || ''}`.trim(),
-              cargo:          String(row[14] || '').trim() || '-',
-              tipoContrato:   String(row[16] || '').trim() || '-',
-              seguimiento:    String(row[18] || '').trim(),
+              pais:           String(valueAt(row, idxPais) || '').trim() || '-',
+              responsable:    String(valueAt(row, idxResponsable) || '').trim() || '-',
+              unidad:         String(valueAt(row, idxUnidad) || '').trim() || '-',
+              cliente:        String(valueAt(row, idxCliente) || '').trim() || '-',
+              identificacion: String(valueAt(row, idxIdentificacion) || ''),
+              apellidos:      `${apellido1 || ''} ${apellido2 || ''}`.trim(),
+              nombres:        `${nombre1 || ''} ${nombre2 || ''}`.trim(),
+              nombreCompleto: `${nombre1 || ''} ${nombre2 || ''} ${apellido1 || ''} ${apellido2 || ''}`.trim(),
+              cargo:          String(valueAt(row, idxCargo) || '').trim() || '-',
+              tipoContrato:   String(valueAt(row, idxTipoContrato) || '').trim() || '-',
+              seguimiento:    String(valueAt(row, idxSeguimiento) || '').trim(),
               fechaIngreso,
               fechaRecibido,
               fechaExamenes,

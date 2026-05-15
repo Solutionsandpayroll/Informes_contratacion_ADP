@@ -940,7 +940,7 @@ input:focus-visible {
 }
 
 /* ============================================================
-   DASHBOARD — ESTILOS ESPECÍFICOS PARA INFORMES ERW
+   DASHBOARD — ESTILOS ESPECÍFICOS PARA INFORMES ADP
    ============================================================ */
 
 /* Upload error */
@@ -1102,6 +1102,18 @@ input:focus-visible {
 }
 .leyenda-titulo { font-weight: 600; color: var(--text-secondary); margin-right: 0.25rem; }
 .leyenda-item   { color: var(--text-secondary); margin-right: 0.75rem; }
+
+.tabla-scroll-top {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  height: 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.9) 0%, rgba(248, 250, 252, 0.45) 100%);
+}
+
+.tabla-scroll-spacer {
+  height: 1px;
+}
 
 .tabla-container { overflow-x: auto; }
 

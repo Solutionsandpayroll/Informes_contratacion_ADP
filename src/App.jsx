@@ -75,7 +75,7 @@ function App() {
               </div>
               <div className="header-text">
                 <h1>Solutions & Payroll</h1>
-                <p className="subtitle">Informes de Contratación — ERW</p>
+                <p className="subtitle">Informes de Contratación — ADP</p>
               </div>
             </div>
 
@@ -101,7 +101,7 @@ function App() {
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
-                <span>Informes ERW</span>
+                <span>Informes ADP</span>
               </div>
             )}
           </div>
@@ -122,7 +122,7 @@ function App() {
                 responsables={responsables}
               />
               <KPICards metricas={metricas} />
-              <TablaDetalle registros={registrosFiltrados} />
+              <TablaDetalle registros={registrosFiltrados} metricas={metricas} />
             </>
           )}
         </div>
